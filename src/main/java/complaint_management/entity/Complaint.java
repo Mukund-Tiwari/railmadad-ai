@@ -1,7 +1,10 @@
 package complaint_management.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import complaint_management.enums.ComplaintCategory;
+import complaint_management.enums.ComplaintPriority;
 import complaint_management.enums.ComplaintStatus;
+import complaint_management.enums.Department;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -26,20 +29,49 @@ public class Complaint {
     @Enumerated(EnumType.STRING)
     private ComplaintStatus status;
 
+    @Enumerated(EnumType.STRING)
+    private ComplaintCategory category;
+
+    @Enumerated(EnumType.STRING)
+    private ComplaintPriority priority;
+
+    @Enumerated(EnumType.STRING)
+    private Department department;
+
+    // First Relationship: The user who created the complaint
     @ManyToOne
     @JoinColumn(name = "user_id")
     @JsonIgnore
     private User user;
 
+    // Second Relationship: The Admin assigned to resolve the complaint
+    @ManyToOne
+    @JoinColumn(name = "assigned_admin_id")
+    @JsonIgnore
+    private User assignedAdmin;
+
     public Complaint() {
     }
 
-    public Complaint(Long id, String title, String description, ComplaintStatus status, User user) {
+    public Complaint(Long id,
+                     String title,
+                     String description,
+                     ComplaintStatus status,
+                     ComplaintCategory category,
+                     ComplaintPriority priority,
+                     Department department,
+                     User user,
+                     User assignedAdmin) {
+
         this.id = id;
         this.title = title;
         this.description = description;
         this.status = status;
+        this.category = category;
+        this.priority = priority;
+        this.department = department;
         this.user = user;
+        this.assignedAdmin = assignedAdmin;
     }
 
     public Long getId() {
@@ -58,8 +90,24 @@ public class Complaint {
         return status;
     }
 
+    public ComplaintCategory getCategory() {
+        return category;
+    }
+
+    public ComplaintPriority getPriority() {
+        return priority;
+    }
+
+    public Department getDepartment() {
+        return department;
+    }
+
     public User getUser() {
         return user;
+    }
+
+    public User getAssignedAdmin() {
+        return assignedAdmin;
     }
 
     public void setId(Long id) {
@@ -78,7 +126,23 @@ public class Complaint {
         this.status = status;
     }
 
+    public void setCategory(ComplaintCategory category) {
+        this.category = category;
+    }
+
+    public void setPriority(ComplaintPriority priority) {
+        this.priority = priority;
+    }
+
+    public void setDepartment(Department department) {
+        this.department = department;
+    }
+
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public void setAssignedAdmin(User assignedAdmin) {
+        this.assignedAdmin = assignedAdmin;
     }
 }

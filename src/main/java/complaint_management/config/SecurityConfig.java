@@ -52,8 +52,21 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
 
-                        .requestMatchers("/admin/**")
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**"
+                        ).permitAll()
+
+                        .requestMatchers(HttpMethod.GET, "/admin/**")
                         .hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.PATCH, "/admin/**")
+                        .hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.DELETE, "/admin/**")
+                        .hasRole("ADMIN")
+
 
                         .requestMatchers(HttpMethod.GET, "/complaints/**")
                         .hasAnyRole("USER", "ADMIN")

@@ -1,5 +1,6 @@
 package complaint_management.controller;
 
+import complaint_management.dto.AdminAssignmentRequestDTO;
 import complaint_management.dto.ComplaintResponseDTO;
 import complaint_management.dto.StatusUpdateRequestDTO;
 import complaint_management.service.ComplaintService;
@@ -23,6 +24,15 @@ public class AdminComplaintController {
         return complaintService.getAllComplaints();
     }
 
+    @PatchMapping("/{id}/status-test")
+    public String testPatchWithId(@PathVariable Long id) {
+
+        System.out.println("PATCH WITH ID API HIT");
+        System.out.println("Complaint ID: " + id);
+
+        return "PATCH is working for complaint id: " + id;
+    }
+
     @PatchMapping("/{id}/status")
     public ComplaintResponseDTO updateComplaintStatus(
             @PathVariable Long id,
@@ -31,6 +41,18 @@ public class AdminComplaintController {
         return complaintService.updateComplaintStatus(
                 id,
                 requestDTO.getStatus()
+        );
+    }
+
+    // NEW ENDPOINT: To assign a complaint to an admin
+    @PatchMapping("/{id}/assign")
+    public ComplaintResponseDTO assignComplaint(
+            @PathVariable Long id,
+            @Valid @RequestBody AdminAssignmentRequestDTO requestDTO) {
+
+        return complaintService.assignComplaintToAdmin(
+                id,
+                requestDTO.getAdminId()
         );
     }
 

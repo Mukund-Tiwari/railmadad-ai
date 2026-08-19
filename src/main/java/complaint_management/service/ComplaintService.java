@@ -4,7 +4,10 @@ import complaint_management.dto.ComplaintRequestDTO;
 import complaint_management.dto.ComplaintResponseDTO;
 import complaint_management.entity.Complaint;
 import complaint_management.entity.User;
+import complaint_management.enums.ComplaintCategory;
+import complaint_management.enums.ComplaintPriority;
 import complaint_management.enums.ComplaintStatus;
+import complaint_management.enums.Department;
 import complaint_management.exception.ResourceNotFoundException;
 import complaint_management.repository.ComplaintRepository;
 import complaint_management.repository.UserRepository;
@@ -20,13 +23,16 @@ public class ComplaintService {
 
     private final ComplaintRepository complaintRepository;
     private final UserRepository userRepository;
+    private final ComplaintIntelligenceService complaintIntelligenceService;
 
     public ComplaintService(
             ComplaintRepository complaintRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            ComplaintIntelligenceService complaintIntelligenceService) {
 
         this.complaintRepository = complaintRepository;
         this.userRepository = userRepository;
+        this.complaintIntelligenceService = complaintIntelligenceService;
     }
 
     public List<ComplaintResponseDTO> getAllComplaints() {
@@ -66,6 +72,25 @@ public class ComplaintService {
         complaint.setDescription(complaintRequestDTO.getDescription());
         complaint.setStatus(complaintRequestDTO.getStatus());
         complaint.setUser(user);
+
+        ComplaintCategory category =
+                complaintIntelligenceService.predictCategory(
+                        complaintRequestDTO.getTitle(),
+                        complaintRequestDTO.getDescription()
+                );
+
+        ComplaintPriority priority =
+                complaintIntelligenceService.predictPriority(
+                        complaintRequestDTO.getTitle(),
+                        complaintRequestDTO.getDescription()
+                );
+
+        Department department =
+                complaintIntelligenceService.predictDepartment(category);
+
+        complaint.setCategory(category);
+        complaint.setPriority(priority);
+        complaint.setDepartment(department);
 
         Complaint savedComplaint = complaintRepository.save(complaint);
 
@@ -150,8 +175,38 @@ public class ComplaintService {
         return mapToResponseDTO(updatedComplaint);
     }
 
+    public ComplaintResponseDTO assignComplaintToAdmin(Long complaintId, Long adminId) {
 
+        // 1. Find the Complaint
+        Complaint complaint = complaintRepository.findById(complaintId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Complaint not found with id : " + complaintId
+                        ));
 
+        // 2. Find the Admin User
+        User adminUser = userRepository.findById(adminId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "User not found with id : " + adminId
+                        ));
+
+        // 3. Verify the User is actually an ADMIN
+        if (!adminUser.getRole().name().equals("ADMIN")) {
+            throw new IllegalArgumentException("User is not an ADMIN and cannot be assigned complaints.");
+        }
+
+        // 4. Link the Admin to the Complaint
+        complaint.setAssignedAdmin(adminUser);
+
+        // 5. Automatically update the status
+        complaint.setStatus(ComplaintStatus.IN_PROGRESS);
+
+        // 6. Save to Database
+        Complaint updatedComplaint = complaintRepository.save(complaint);
+
+        return mapToResponseDTO(updatedComplaint);
+    }
 
     private ComplaintResponseDTO mapToResponseDTO(Complaint complaint) {
 
@@ -160,6 +215,14 @@ public class ComplaintService {
         responseDTO.setId(complaint.getId());
         responseDTO.setTitle(complaint.getTitle());
         responseDTO.setStatus(complaint.getStatus());
+        responseDTO.setCategory(complaint.getCategory());
+        responseDTO.setPriority(complaint.getPriority());
+        responseDTO.setDepartment(complaint.getDepartment());
+
+        // NEW LOGIC: Check if an admin is assigned, and if so, get their name!
+        if (complaint.getAssignedAdmin() != null) {
+            responseDTO.setAssignedAdminName(complaint.getAssignedAdmin().getName());
+        }
 
         return responseDTO;
     }
