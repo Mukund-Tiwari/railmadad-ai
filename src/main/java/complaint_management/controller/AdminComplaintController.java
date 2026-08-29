@@ -1,10 +1,12 @@
 package complaint_management.controller;
 
 import complaint_management.dto.AdminAssignmentRequestDTO;
+import complaint_management.dto.ComplaintHistoryDTO;
 import complaint_management.dto.ComplaintResponseDTO;
 import complaint_management.dto.StatusUpdateRequestDTO;
 import complaint_management.service.ComplaintService;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -43,6 +45,14 @@ public class AdminComplaintController {
                 requestDTO.getStatus()
         );
     }
+
+    @GetMapping("/{id}/history")
+    public ResponseEntity<List<ComplaintHistoryDTO>> getComplaintHistory(@PathVariable Long id) {
+        List<ComplaintHistoryDTO> history = complaintService.getComplaintHistory(id);
+        return ResponseEntity.ok(history);
+    }
+
+
 
     // NEW ENDPOINT: To assign a complaint to an admin
     @PatchMapping("/{id}/assign")
